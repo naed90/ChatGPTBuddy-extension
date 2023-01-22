@@ -101,18 +101,27 @@ class ChatGPT_API {
           });
     }
 
-    static async queryChatGPT(queryString) {
+    static async queryChatGPT(request) {
+        let {queryString, conversationID} = request;
         const accessToken = await ChatGPT_API.getAccessToken();
-        const response = await ChatGPT_API.sendQueryStringToOpenAIAPI(accessToken, queryString);
-        const conversationID = await ChatGPT_API.getConversationID(accessToken);
-        console.log("in text: ");
-        console.log(conversationID)
-        const data = await response.text();
+        const response = await ChatGPT_API.sendQueryStringToOpenAIAPI(accessToken, queryString, conversationID);
+        if (!conversationID) {
+            conversationID = await ChatGPT_API.getConversationID(accessToken);
+        }
+        // console.log("in text: ");
+        // console.log(conversationID)
+        let data = await response.text();
+        // console.log(data);
+        // console.log("Let's gooooooooooooooo")
+        // const response2 = await ChatGPT_API.sendQueryStringToOpenAIAPI(accessToken, "what do you think of this article?", conversationID);
+        // const data2 = await response2.text();
+        // console.log(data2);
+        
+        // TODO: this is a temporary heuristic to get the string out of the data:
         console.log(data);
-        console.log("Let's gooooooooooooooo")
-        const response2 = await ChatGPT_API.sendQueryStringToOpenAIAPI(accessToken, "what do you think of this article?", conversationID);
-        const data2 = await response2.text();
-        console.log(data2);
+        data = data.split(conversationID);
+        data = data[data.length-2].split("[\"")[1].split("\"]")[0];
+        return {data, conversationID};
 
         // Loop over response messages from the OpenAI api:
         // if (!response.ok) {
@@ -135,10 +144,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     // TODO: validate sender?
     switch(request.message) {
         case "getAccessToken":
-            ChatGPT_API.getAccessToken().then(x => {sendResponse({message: 'success', payload: x}); console.log(432432421 + " " + Date.now())});
+            ChatGPT_API.getAccessToken().then(x => sendResponse({message: 'success', payload: x}));
             break;
         case "queryChatGPT":
-            ChatGPT_API.queryChatGPT(request.data);
+            ChatGPT_API.queryChatGPT(request.data).then(x => sendResponse({message: 'success', payload: x}));
             break;
 
         default:
