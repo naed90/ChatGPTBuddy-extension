@@ -1,7 +1,13 @@
 class UI {
     constructor() {
         this.widget = this.createWidget();
+        this.inputBox = this.createInputBox();
+        this.sendButton = this.createSendButton();
+        this.form = this.createForm();
         this.currentElement = undefined;
+
+        // Init:
+        this.setMessages([]);
     }
 
     // Helper function
@@ -20,6 +26,40 @@ class UI {
         UI.applyCSS(widget, UI.widgetStyle);
         document.body.appendChild(widget);
         return widget;
+    }
+
+    createInputBox () {
+        if (this.inputBox) {
+            return;
+        }
+        const input = document.createElement("input");
+        input.setAttribute("type", "text");
+        UI.applyCSS(input, UI.inputStyle);
+        return input;
+    }
+
+    createSendButton() {
+        if (this.sendButton) {
+            return;
+        }
+
+        const button = document.createElement("button");
+        const imageSrc = chrome.runtime.getURL("images/sendButton.png");
+        button.innerHTML = '<img src=' + imageSrc + ' width=100%/>';
+        UI.applyCSS(button, UI.buttonStyle);
+        return button;
+    }
+
+    createForm() {
+        if (this.form) {
+            return;
+        }
+
+        const form = document.createElement("form");
+        UI.applyCSS(form, UI.formStyle);
+        form.appendChild(this.inputBox);
+        form.appendChild(this.sendButton);
+        return form;
     }
 
     clearWidget() {
@@ -62,6 +102,10 @@ class UI {
             this.appendToWidget(elem);
         }
 
+        // this.appendToWidget(this.inputBox);
+        // this.inputBox.insertAdjacentElement('afterend', this.sendButton);
+        this.appendToWidget(this.form);
+
         // Scroll to bottom of widget:
         this.widget.scrollTop = this.widget.scrollHeight;
     }
@@ -70,10 +114,10 @@ class UI {
         let messages = [];
         const new_this = this; // In the context below, `this` refers to the anonymous function below
         (function addMessage() {
-            if(messages.length < 100) {
+            if(messages.length < 5) {
                 messages = messages.concat([{text:("a".repeat(messages.length)), user:(messages.length % 2)}]);
                 new_this.setMessages(messages);
-                setTimeout(addMessage, 1000);
+                setTimeout(addMessage, 100);
             }
         })();
     }
@@ -118,6 +162,25 @@ UI.imageStyle = {
 UI.paragraphStyle = {
     margin: "0"
 }
+UI.formStyle = {
+    display: "flex"
+}
+UI.inputStyle = {
+    border: "2px solid #dedede",
+    backgroundColor: "rgba(20, 20, 20, 0.95)",
+    borderRadius: "10px",
+    overflowWrap: "break-word", 
+    color: "rgb(240, 240, 240)",
+    flexGrow: "1",
+    marginLeft: "10px",
+    marginRight: "2px"
+}
+UI.buttonStyle = {
+    maxWidth: "30px",
+    backgroundColor: "rgba(0,0,0,0)",
+    border: "none"
+}
+
 
 class PageParser {
     constructor () {};
@@ -155,7 +218,7 @@ class Buddy {
 class Runner {
     static async run() {
         const ui = new UI();
-        ui.test();
+        // ui.test();
 
         const buddy = new Buddy();
         // buddy.run();
