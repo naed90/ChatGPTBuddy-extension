@@ -57,7 +57,7 @@ class ChatGPT_API {
     //     }
     // }
 
-    static async sendQueryStringToOpenAIAPI(accessToken, queryString) {
+    static async sendQueryStringToOpenAIAPI(accessToken, queryString, conversationID) {
         const response = await fetch('https://chat.openai.com/backend-api/conversation', {
             method: 'POST',
             headers: {
@@ -66,6 +66,7 @@ class ChatGPT_API {
             },
             body: JSON.stringify({
               action: 'next',
+              conversation_id: conversationID,
               messages: [
                 {
                   id: uuidv4(),
@@ -85,12 +86,33 @@ class ChatGPT_API {
         return response;
     }
 
+    static async getConversationID(accessToken) {
+        return fetch('https://chat.openai.com/backend-api/conversations?offset=0&limit=1', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${accessToken}`,
+              },
+        })
+        .then(function(response) {
+            return response.json();
+          }).then(function(data) {
+            return data["items"][0]["id"];  
+          });
+    }
+
     static async queryChatGPT(queryString) {
         const accessToken = await ChatGPT_API.getAccessToken();
         const response = await ChatGPT_API.sendQueryStringToOpenAIAPI(accessToken, queryString);
+        const conversationID = await ChatGPT_API.getConversationID(accessToken);
         console.log("in text: ");
+        console.log(conversationID)
         const data = await response.text();
         console.log(data);
+        console.log("Let's gooooooooooooooo")
+        const response2 = await ChatGPT_API.sendQueryStringToOpenAIAPI(accessToken, "what do you think of this article?", conversationID);
+        const data2 = await response2.text();
+        console.log(data2);
 
         // Loop over response messages from the OpenAI api:
         // if (!response.ok) {
